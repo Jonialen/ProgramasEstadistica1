@@ -104,9 +104,9 @@ def plot_t_distribution_and_critical_region(t_stat, df, alpha, isDosColas):
     plt.show()
 
 
-media = 22.1
-desviacion = 40.9
-tamaño = 11
+media = 0.109444444
+desviacion = 0.102639989
+tamaño = 18
 
 data = np.array([media, desviacion, tamaño])
 

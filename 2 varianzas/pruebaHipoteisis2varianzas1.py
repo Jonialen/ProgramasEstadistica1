@@ -52,11 +52,11 @@ def graficar_distribucion_f_y_region_critica(estadistico_f, tamaño1, tamaño2, 
 
 
 # Ejemplo de uso del código para la prueba F
-varianza1 = 170**2
-tamaño1 = 26
+varianza1 = 1.812929293
+tamaño1 = 100
 
-varianza2 = 100**2
-tamaño2 = 25
+varianza2 = 0.998645455
+tamaño2 = 100
 
 data1 = (varianza1, tamaño1)
 data2 = (varianza2, tamaño2)
@@ -64,7 +64,7 @@ data2 = (varianza2, tamaño2)
 if varianza1 < varianza2:
     data1, data2 = data2, data1
 
-alpha = 0.05
+alpha = 0.01
 estadistico_f = calcular_estadistico_f(data1, data2)
 probabilidad_colateral_f = calcular_probabilidad_colateral_f(
     estadistico_f, tamaño1, tamaño2)

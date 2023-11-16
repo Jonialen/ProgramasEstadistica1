@@ -78,13 +78,13 @@ def calcular_estadistico_t(data1, data2, d0):
 
 
 def calcular_grados_de_libertad(data1, data2):
-    tamaño1 = data1[2]
-    tamaño2 = data2[2]
-    varianza1 = data1[1]**2
-    varianza2 = data2[1]**2
-    grados_libertad = ((varianza1 / tamaño1 + varianza2 / tamaño2)**2) / ((varianza1 **
-                                                                           2 / ((tamaño1 - 1) * tamaño1**2)) + (varianza2 / ((tamaño2 - 1) * tamaño2**2)))
-    return grados_libertad
+    size1 = data1[2]
+    size2 = data2[2]
+    var1 = data1[1]**2
+    var2 = data2[1]**2
+    return ((var1 / size1 + var2 / size2)**2) / \
+           ((var1**2 / ((size1 - 1) * size1**2)) +
+            (var2**2 / ((size2 - 1) * size2**2)))
 
 
 def plot_t_distribution_and_critical_region(t_stat, df, alpha, isDosColas):
@@ -106,8 +106,8 @@ def plot_t_distribution_and_critical_region(t_stat, df, alpha, isDosColas):
                          label=f'Región crítica ({alpha})')
 
     else:
-        t_critical = scipy.stats.t.ppf(1 - alpha/2, df)
-        x_fill = np.linspace(t_critical, 5, 1000)
+        t_critical = scipy.stats.t.ppf(1 - alpha, df)
+        x_fill = np.linspace(-5, -t_critical, 1000)
         y_fill = scipy.stats.t.pdf(x_fill, df)
         plt.fill_between(x_fill, y_fill, color='red', alpha=0.5,
                          label=f'Región crítica ({alpha})')
@@ -123,12 +123,12 @@ def plot_t_distribution_and_critical_region(t_stat, df, alpha, isDosColas):
 
 
 # Datos de muestra
-media1 = 22.1
-media2 = 20.4
-desviacion1 = 4.09
-desviacion2 = 3.08
-tamaño1 = 11
-tamaño2 = 7
+media1 = 1108.290323
+media2 = 1159.121951
+desviacion1 = 14115.74624**0.5
+desviacion2 = 15135.80976**0.5
+tamaño1 = 31
+tamaño2 = 41
 
 data1 = [media1, desviacion1, tamaño1]
 data2 = [media2, desviacion2, tamaño2]
@@ -170,7 +170,7 @@ print(
     f"Con una confianza de {100-alpha*200 if isDosColas else 100-alpha*100}%, la diferencia entre las medias se encuentra entre {intervalo_de_confiza[0].round(4)} y {intervalo_de_confiza[1].round(4)}.")
 
 print(f"\nEstadístico t: {estadistico_t.round(4)}")
-print(f"Grados de libertad: {grados_libertad.round(4)}")
+print(f"Grados de libertad: {grados_libertad}")
 print(f"Valor-P: {probabilidad_colateral_t.round(4)}")
 
 plot_t_distribution_and_critical_region(

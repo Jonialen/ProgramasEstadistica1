@@ -3,9 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def calcular_probabilidad_colateral_z(estadistico_z):
+def calcular_probabilidad_colateral_z(estadistico_z, dosColas):
     probabilidad_colateral = scipy.stats.norm.sf(abs(estadistico_z))
-    return probabilidad_colateral
+    return probabilidad_colateral * 2 if dosColas else probabilidad_colateral
 
 
 def calcular_estadistico_z(proporcion1, proporcion2, tamaño1, tamaño2):
@@ -40,14 +40,15 @@ def plot_z_distribution_and_critical_region(z_stat, alpha):
 
 
 # Datos de muestra
-muestra1 = 12
-muestra2 = 8
-tamaño1 = 56
-tamaño2 = 32
+muestra1 = 82
+muestra2 = 72
+tamaño1 = 100
+tamaño2 = 100
 proporcion1 = muestra1/tamaño1
 proporcion2 = muestra2/tamaño2
-alpha = 0.01
+alpha = 0.05
 h0 = 0
+dosColas = False
 
 # Calcular estadístico Z
 estadistico_z = calcular_estadistico_z(
@@ -57,7 +58,7 @@ estadistico_z = calcular_estadistico_z(
 print(f"Proporción agrupada: {proporcion1} y {proporcion2}")
 print(f"Estadístico Z: {estadistico_z}")
 print(
-    f"Probabilidad que queda en la región central de Z: {calcular_probabilidad_colateral_z(estadistico_z)}")
+    f"Probabilidad que queda en la región central de Z: {calcular_probabilidad_colateral_z(estadistico_z, dosColas)}")
 
 # Graficar la distribución Z y la región central en rojo
 plot_z_distribution_and_critical_region(estadistico_z, alpha)

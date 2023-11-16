@@ -1,175 +1,130 @@
-import pandas as pd
-import scipy.stats
 import numpy as np
+import pandas as pd
+import scipy.stats as stats
 import matplotlib.pyplot as plt
 
 
-def calcular_intervalo_de_confiza(data1, data2, grados_libertad, alpha, isDosColas):
-    alpha = alpha*2 if isDosColas else alpha
-    estadisticas_data1 = calcular_estadistica_descriptiva(data1)
-    estadisticas_data2 = calcular_estadistica_descriptiva(data2)
-
-    desviacion1 = estadisticas_data1['desviacion_estandar']
-    desviacion2 = estadisticas_data2['desviacion_estandar']
-
-    tamaño1 = estadisticas_data1['tamaño']
-    tamaño2 = estadisticas_data2['tamaño']
-
-    media1 = estadisticas_data1['media']
-    media2 = estadisticas_data2['media']
-
-    desviacion_pooled = calcular_desviacion_pooled(
-        desviacion1, desviacion2, tamaño1, tamaño2)
-
-    dif = media1-media2 if media1 > media2 else media2-media1
-    valor_t = calcular_valor_t(alpha/2, grados_libertad)
-    menor = dif-valor_t*desviacion_pooled
-    mayor = dif+valor_t*desviacion_pooled
-
-    return (menor, mayor)
-
-
-def calcular_valor_t(alpha, grados_libertad):
-    valor_t = scipy.stats.t.ppf(1 - alpha, grados_libertad)
-    return valor_t
-
-
-def calcular_probabilidad_colateral_t(estadistico_t, grados_libertad, isDosColas):
-    probabilidad_colateral = scipy.stats.t.sf(estadistico_t, grados_libertad)
-    probabilidad_colateral = probabilidad_colateral * \
-        2 if isDosColas else probabilidad_colateral
-    return probabilidad_colateral
-
-
-def calcular_estadistica_descriptiva(data):
-    estadisticas = {
-        'media': np.mean(data),
-        'desviacion_estandar': np.std(data, ddof=1),
-        'tamaño': len(data)
+def calculate_descriptive_statistics(data):
+    return {
+        'mean': np.mean(data),
+        'standard_deviation': np.std(data, ddof=1),
+        'size': len(data)
     }
-    return estadisticas
 
 
-def calcular_desviacion_pooled(desviacion1, desviacion2, tamaño1, tamaño2):
-    desviacion_pooled = ((desviacion1**2/tamaño1) +
-                         (desviacion2**2/tamaño2))**0.5
-    return desviacion_pooled
+def calculate_pooled_standard_deviation(std1, std2, size1, size2):
+    return np.sqrt((std1**2 / (size1) + std2**2 / (size2)))
 
 
-def calcular_estadistico_t(data1, data2, d0):
-    estadisticas_data1 = calcular_estadistica_descriptiva(data1)
-    estadisticas_data2 = calcular_estadistica_descriptiva(data2)
-
-    desviacion1 = estadisticas_data1['desviacion_estandar']
-    desviacion2 = estadisticas_data2['desviacion_estandar']
-
-    tamaño1 = estadisticas_data1['tamaño']
-    tamaño2 = estadisticas_data2['tamaño']
-
-    media1 = estadisticas_data1['media']
-    media2 = estadisticas_data2['media']
-
-    desviacion_pooled = calcular_desviacion_pooled(
-        desviacion1, desviacion2, tamaño1, tamaño2)
-
-    dif = media1-media2
-    estadistico_t = (dif-d0) / desviacion_pooled
-    return estadistico_t
+def calculate_t_statistic(data1, data2, d0):
+    stats1 = calculate_descriptive_statistics(data1)
+    stats2 = calculate_descriptive_statistics(data2)
+    mean_diff = stats1['mean'] - stats2['mean']
+    pooled_std = calculate_pooled_standard_deviation(stats1['standard_deviation'],
+                                                     stats2['standard_deviation'],
+                                                     stats1['size'],
+                                                     stats2['size'])
+    return (mean_diff - d0) / (pooled_std)
 
 
-def calcular_grados_de_libertad(data1, data2):
-    tamaño1 = len(data1)
-    tamaño2 = len(data2)
-    grados_libertad = ((np.var(data1, ddof=1) / tamaño1 + np.var(data2, ddof=1) / tamaño2)**2) / \
-        ((np.var(data1, ddof=1)**2 / ((tamaño1 - 1) * tamaño1**2)) +
-         (np.var(data2, ddof=1)**2 / ((tamaño2 - 1) * tamaño2**2)))
-    return grados_libertad
+def calculate_t_value(alpha, degrees_of_freedom):
+    return stats.t.ppf(1 - alpha, degrees_of_freedom)
 
 
-def plot_t_distribution_and_critical_region(t_stat, df, alpha, isDosColas):
+def calculate_degrees_of_freedom(data1, data2):
+    size1, size2 = len(data1), len(data2)
+    var1, var2 = np.var(data1, ddof=1), np.var(data2, ddof=1)
+    return ((var1 / size1 + var2 / size2)**2) / \
+           ((var1**2 / ((size1 - 1) * size1**2)) +
+            (var2**2 / ((size2 - 1) * size2**2)))
 
+
+def calculate_confidence_interval(mean_diff, pooled_std, size1, degrees_of_freedom, alpha, two_tailed):
+    t_value = calculate_t_value(alpha / 2, degrees_of_freedom)
+    margin_of_error = t_value * pooled_std
+    return mean_diff - margin_of_error, mean_diff + margin_of_error
+
+
+def calculate_tail_probability(t_statistic, degrees_of_freedom, two_tailed):
+    p_value = stats.t.sf(np.abs(t_statistic), degrees_of_freedom)
+    return p_value * 2 if two_tailed else p_value
+
+
+def plot_t_distribution(t_stat, df, alpha, two_tailed):
     x = np.linspace(-5, 5, 1000)
-    y = scipy.stats.t.pdf(x, df)
-    plt.plot(x, y, label=f'Distribución t con {df} grados de libertad')
-    if isDosColas:
-        t_critical_1 = scipy.stats.t.ppf(alpha, df)
-        t_critical_2 = scipy.stats.t.ppf(1 - alpha, df)
-        x_fill = np.linspace(-5, t_critical_1, 1000)
-        y_fill = scipy.stats.t.pdf(x_fill, df)
-        plt.fill_between(x_fill, y_fill, color='red', alpha=0.5,
-                         label=f'Región crítica ({alpha})')
+    y = stats.t.pdf(x, df)
+    plt.plot(x, y, label=f'T-distribution with {df} DoF')
 
-        x_fill = np.linspace(t_critical_2, 5, 1000)
-        y_fill = scipy.stats.t.pdf(x_fill, df)
-        plt.fill_between(x_fill, y_fill, color='red', alpha=0.5,
-                         label=f'Región crítica ({alpha})')
-
+    if two_tailed:
+        crit_val1 = stats.t.ppf(alpha / 2, df)
+        crit_val2 = stats.t.ppf(1 - alpha / 2, df)
+        plt.fill_between(x, y, where=(x < crit_val1) | (
+            x > crit_val2), color='red', alpha=0.5)
     else:
-        t_critical = scipy.stats.t.ppf(1 - alpha, df)
-        x_fill = np.linspace(t_critical, 5, 1000)
-        y_fill = scipy.stats.t.pdf(x_fill, df)
-        plt.fill_between(x_fill, y_fill, color='red', alpha=0.5,
-                         label=f'Región crítica ({alpha})')
+        crit_val = stats.t.ppf(1 - alpha, df)
+        plt.fill_between(x, y, where=x > crit_val, color='red', alpha=0.5)
 
     plt.axvline(t_stat, color='green', linestyle='--',
-                label=f'Estadístico t calculado: {t_stat}')
+                label=f'T-statistic: {t_stat}')
     plt.legend()
-    plt.xlabel('Valor de t')
-    plt.ylabel('Densidad de probabilidad')
-    plt.title('Distribución t y Región Crítica')
+    plt.xlabel('t-value')
+    plt.ylabel('Probability Density')
+    plt.title('T-Distribution and Critical Region')
     plt.grid(True)
     plt.show()
 
 
-archivo_csv = 'AirDelay.csv'
-df = pd.read_csv(archivo_csv)
+file_csv = 'AirDelay.csv'
+df = pd.read_csv(file_csv)
 
 # Supongamos que no conocemos los nombres de las columnas, los detectamos automáticamente
-columnas = df.columns
-if len(columnas) != 2:
+columns = df.columns
+if len(columns) != 2:
     raise ValueError("El archivo CSV debe tener exactamente dos columnas.")
 
-data1 = df[columnas[0]].dropna().values
-data2 = df[columnas[1]].dropna().values
+data1 = df[columns[0]].dropna().values
+data2 = df[columns[1]].dropna().values
 
 data1 = np.array(data1)
 data2 = np.array(data2)
-estadisticas_data1 = calcular_estadistica_descriptiva(data1)
-estadisticas_data2 = calcular_estadistica_descriptiva(data2)
 
-d0 = 0.013
 alpha = 0.05
-isDosColas = True
-alpha = alpha/2 if isDosColas else alpha
+two_tailed = False
+d0 = 0
 
-# Calcular estadístico t y grados de libertad
-estadistico_t = calcular_estadistico_t(data1, data2, d0)
-grados_libertad = calcular_grados_de_libertad(data1, data2)
+stats_data1 = calculate_descriptive_statistics(data1)
+stats_data2 = calculate_descriptive_statistics(data2)
 
-# Calcular la probabilidad que deja la cola del valor de t
-probabilidad_colateral_t = calcular_probabilidad_colateral_t(
-    abs(estadistico_t), grados_libertad, isDosColas)
+degrees_of_freedom = calculate_degrees_of_freedom(data1, data2)
+t_statistic = calculate_t_statistic(data1, data2, d0)
+tail_probability = calculate_tail_probability(
+    t_statistic, degrees_of_freedom, two_tailed)
 
-intervalo_de_confiza = calcular_intervalo_de_confiza(
-    data1, data2, grados_libertad, alpha, isDosColas)
-# Graficar la distribución t y la región crítica
+mean_diff = stats_data1['mean'] - stats_data2['mean']
+pooled_std = calculate_pooled_standard_deviation(stats_data1['standard_deviation'],
+                                                 stats_data2['standard_deviation'],
+                                                 stats_data1['size'],
+                                                 stats_data2['size'])
+confidence_interval = calculate_confidence_interval(
+    mean_diff, pooled_std, stats_data1['size'], degrees_of_freedom, alpha, two_tailed)
+
 print("Estadísticas de data1:")
-for key, value in calcular_estadistica_descriptiva(data1).items():
-    print(f"{key}: {float(value)}")
+for key, value in stats_data1.items():
+    print(f"{key}: {value}")
 
 print("\nEstadísticas de data2:")
-for key, value in calcular_estadistica_descriptiva(data2).items():
-    print(f"{key}: {float(value)}")
+for key, value in stats_data2.items():
+    print(f"{key}: {value}")
 
+print(f"\nDiferencia de medias: {mean_diff}")
+
+print("\nIntervalo de confianza")
 print(
-    f"\nDiferencia de medias: {estadisticas_data1['media']-estadisticas_data2['media']}")
-print("\nIntervalo de confiza")
-print(
-    f"Con una confianza de {100-alpha*200 if isDosColas else 100-alpha*100}%, la diferencia entre las medias se encuentra entre {intervalo_de_confiza[0].round(4)} y {intervalo_de_confiza[1].round(4)}.")
+    f"Con una confianza del {100 - alpha * 100}% se espera que la diferencia entre las medias esté entre {confidence_interval[0]} y {confidence_interval[1]}.")
 
-print(f"\nEstadístico t: {estadistico_t.round(4)}")
-print(f"Grados de libertad: {grados_libertad.round(4)}")
-print(f"Valor-P: {probabilidad_colateral_t.round(4)}")
+print(f"\nEstadístico t: {t_statistic}")
+print(f"Grados de libertad: {degrees_of_freedom}")
+print(f"Probabilidad colateral (p-valor): {tail_probability}")
 
-plot_t_distribution_and_critical_region(
-    estadistico_t, grados_libertad, alpha, isDosColas)
+# Graficar la distribución t y la región crítica
+plot_t_distribution(t_statistic, degrees_of_freedom, alpha, two_tailed)

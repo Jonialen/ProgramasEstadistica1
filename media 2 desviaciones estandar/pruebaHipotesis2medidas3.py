@@ -38,7 +38,7 @@ def calculate_degrees_of_freedom(data1, data2):
             (var2**2 / ((size2 - 1) * size2**2)))
 
 
-def calculate_confidence_interval(mean_diff, pooled_std, size1, degrees_of_freedom, alpha, two_tailed):
+def calculate_confidence_interval(mean_diff, pooled_std, degrees_of_freedom, alpha):
     t_value = calculate_t_value(alpha / 2, degrees_of_freedom)
     margin_of_error = t_value * pooled_std
     return mean_diff - margin_of_error, mean_diff + margin_of_error
@@ -98,7 +98,7 @@ pooled_std = calculate_pooled_standard_deviation(stats_data1['standard_deviation
                                                  stats_data1['size'],
                                                  stats_data2['size'])
 confidence_interval = calculate_confidence_interval(
-    mean_diff, pooled_std, stats_data1['size'], degrees_of_freedom, alpha, two_tailed)
+    mean_diff, pooled_std, degrees_of_freedom, alpha)
 
 print("Estadísticas de data1:")
 for key, value in stats_data1.items():
